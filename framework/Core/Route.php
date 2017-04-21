@@ -1,168 +1,141 @@
 <?php
 namespace Framework\Core;
 
-/**
- * @method static TinyRouter get(string $route, Callable $callback)
- * @method static TinyRouter post(string $route, Callable $callback)
- * @method static TinyRouter put(string $route, Callable $callback)
- * @method static TinyRouter delete(string $route, Callable $callback)
- * @method static TinyRouter options(string $route, Callable $callback)
- * @method static TinyRouter head(string $route, Callable $callback)
- */
 class Route
 {
-    public static $routes = array();
-    public static $methods = array();
-    public static $callbacks = array();
-    public static $patterns = array(
-        ':any' => '[^/]+',
-        ':num' => '[0-9]+',
-        ':all' => '.*'
-    );
-    public static $error_callback;
-  /**
-   * add filter for your routes
-   */
-    public static function filter($filter, $result)
+    public $uri; //当前访问
+    public $routes = []; //路由配置数组
+
+    /**
+     * Route constructor.
+     * 加载路由配置
+     * @param array $routes
+     */
+    public function __construct($routes = [])
     {
-        if ($filter()) {
-            $result();
-        }
+        $this->uri = self::detect_uri();
+        $this->routes = self::loader($routes);
     }
-  /**
-   * Defines a route w/ callback and method
-   */
-    public static function __callstatic($method, $params)
-    {
-        $uri = $params[0];
-        $callback = $params[1];
-        if ($method == 'any') {
-            self::pushToArray($uri, 'get', $callback);
-            self::pushToArray($uri, 'post', $callback);
-        } else {
-            self::pushToArray($uri, $method, $callback);
-        }
-    }
-  /**
-   * Push route items to class arrays
-   *
-   */
-    public static function pushToArray($uri, $method, $callback)
-    {
-        array_push(self::$routes, $uri);
-        array_push(self::$methods, strtoupper($method));
-        array_push(self::$callbacks, $callback);
-    }
-  /**
-   * Defines callback if route is not found
-  */
-    public static function error($callback)
-    {
-        self::$error_callback = $callback;
-    }
-  /**
-   * Runs the callback for the given request
-   *
-   * $after: Processor After. It will process the value returned by Controller.
-   * Example: View@process
-   *
-   */
-    public static function dispatch($after = null)
-    {
-        $uri = self::detect_uri();
-        $method = $_SERVER['REQUEST_METHOD'];
-        $searches = array_keys(static::$patterns);
-        $replaces = array_values(static::$patterns);
-        $found_route = false;
-        // check if route is defined without regex
-        if (in_array($uri, self::$routes)) {
-            $route_pos = array_keys(self::$routes, $uri);
-            foreach ($route_pos as $route) {
-                if (self::$methods[$route] == $method) {
-                    $found_route = true;
-                    //if route is not an object
-                    if (!is_object(self::$callbacks[$route])) {
-                        //grab all parts based on a / separator
-                        $parts = explode('/', self::$callbacks[$route]);
-                        //collect the last index of the array
-                        $last = end($parts);
-                        //grab the controller name and method call
-                        $segments = explode('@', $last);
-                        //instanitate controller
-                        $controller_name = 'App\\Http\\Controller\\' . $segments[0];
-                        $function_name = $segments[1];
-                        $controller = new $controller_name();
-                        //call method
-                        $return = $controller->$function_name();
-                        if ($after) {
-                            $after_segments = explode('@', $after);
-                            $after_segments[0]::$after_segments[1]($return);
-                        }
-                    } else {
-                        //call closure
-                        call_user_func(self::$callbacks[$route]);
-                    }
-                }
-            }
-        } else {
-            // check if defined with regex
-            $pos = 0;
-            foreach (self::$routes as $route) {
-                if (strpos($route, ':') !== false) {
-                    $route = str_replace($searches, $replaces, $route);
-                }
-                if (preg_match('#^' . $route . '$#', $uri, $matched)) {
-                    if (self::$methods[$pos] == $method) {
-                        $found_route = true;
-                        array_shift($matched); //remove $matched[0] as [1] is the first parameter.
-                        if (!is_object(self::$callbacks[$pos])) {
-                            //grab all parts based on a / separator
-                            $parts = explode('/', self::$callbacks[$pos]);
-                            //collect the last index of the array
-                            $last = end($parts);
-                            //grab the controller name and method call
-                            $segments = explode('@', $last);
-                            //instanitate controller
-                            $controller = new $segments[0]();
-                            //call method and pass any extra parameters to the method
-                            $return = $controller->$segments[1](implode(",", $matched));
-                            if ($after) {
-                                $after_segments = explode('@', $after);
-                                $after_segments[0]::$after_segments[1]($return);
-                            }
-                        } else {
-                            call_user_func_array(self::$callbacks[$pos], $matched);
-                        }
-                    }
-                }
-                $pos++;
-            }
-        }
-        // run the error callback if the route was not found
-        if ($found_route == false) {
-            if (!self::$error_callback) {
-                self::$error_callback = function () {
-                    header($_SERVER['SERVER_PROTOCOL']." 404 Not Found");
-                    echo '404';
-                };
-            }
-            call_user_func(self::$error_callback);
-        }
-    }
-  // detect true URI, inspired by CodeIgniter 2
-    private static function detect_uri()
+
+    /**
+     * 获取当前访问的uri
+     * inspired by CodeIgniter 2
+     * @return string $uri
+     */
+    public static function detect_uri()
     {
         $uri = $_SERVER['REQUEST_URI'];
+
         if (strpos($uri, $_SERVER['SCRIPT_NAME']) === 0) {
             $uri = substr($uri, strlen($_SERVER['SCRIPT_NAME']));
         } elseif (strpos($uri, dirname($_SERVER['SCRIPT_NAME'])) === 0) {
             $uri = substr($uri, strlen(dirname($_SERVER['SCRIPT_NAME'])));
         }
-        if ($uri == '/' || empty($uri)) {
-            return '/';
-        }
+
+        if ($uri == '/' || empty($uri)) return '/';
+
         $uri = parse_url($uri, PHP_URL_PATH);
-        if (substr($uri, -1, 1) === '/') $uri = rtrim($uri, '/');
-        return str_replace(array('//', '../'), '/', trim($uri));
+        return str_replace(array('//', '../'), '/', trim($uri, '/'));
+    }
+
+    /**
+     * 加载路由配置
+     * 处理完成后的路由配置数组
+     *
+     * $routes = [
+     *     'GET' => [
+     *          '/' => 'IndexController@index',
+     *          'Closure' => function () {
+     *              ......
+     *          }
+     *      ],
+     *     'POST' => [],
+     *      ......
+     * ];
+     *
+     * @param array $routes_tmp 没有处理过的路由配置
+     * @return array 处理完成的路由配置
+     */
+    public static function loader($routes_tmp = [])
+    {
+        $routes = [];
+
+        foreach ($routes_tmp['url'] as $uri => $params) {
+            $method = strtoupper($params[0]);
+            $uri = self::handleUri($uri);
+            $routes[$method][$uri] = $params[1];
+        }
+
+        foreach ($routes_tmp['group'] as $prefix => $item) {
+            foreach ($item as $uri => $params) {
+                $method = strtoupper($params[0]);
+                $full_uri = self::handleUri($prefix . '/' . $uri);
+                $routes[$method][$full_uri] = $params[1];
+            }
+        }
+
+        return $routes;
+    }
+
+    /**
+     * 对路由配置的uri进行格式化处理
+     *
+     * @param $uri
+     * @return mixed
+     */
+    public static function handleUri($uri)
+    {
+        if ($uri == '/' || empty($uri)) return '/';
+        if (substr($uri, -1, 1) === '/') $uri = substr($uri, 0, strlen($uri)-1);
+        return $uri;
+    }
+
+    /**
+     * 分发执行
+     */
+    public function dispatch()
+    {
+        $uri = $this->uri; //当前请求的地址
+        $method = $_SERVER['REQUEST_METHOD']; //当前访问的方法
+        $current_method_routes = $this->routes[$method]; //当前请求方法的路由表
+
+        //判断当前请求是否存在与路由配置中
+        $route_exist = false;
+        if (in_array($uri, array_keys($current_method_routes))) {
+            $route_exist = true;
+            //判断是实例化控制器还是为闭包函数
+            $callback = $current_method_routes[$uri];
+            is_object($callback) === true ? $callback() : self::initController($callback);
+        }
+
+        if ($route_exist === false) self::errorCallBack();
+    }
+
+    /**
+     * 实例化控制器
+     * @param null $callback
+     */
+    public static function initController($callback = null)
+    {
+        $segments = explode('@', $callback);
+
+        $controller_name = 'App\\Http\\Controller\\' . $segments[0];
+        $function_name = $segments[1];
+
+        //判断是否存在控制器
+        if (class_exists($controller_name)) {
+            $controller = new $controller_name();
+            $controller->$function_name();
+        } else {
+            self::errorCallBack();
+        }
+    }
+
+    /**
+     * 处理错误
+     */
+    public static function errorCallBack()
+    {
+
     }
 }

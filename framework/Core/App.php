@@ -3,9 +3,13 @@ namespace Framework\Core;
 
 class App 
 {
-    public static function init()
+
+    public static function init(Route $router)
     {
-        self::run();
+        var_dump($router->uri);
+        var_dump($router->routes);
+        $router->dispatch(); //路由分发
+//        self::run();
     }
 
     public static function run()

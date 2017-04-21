@@ -7,15 +7,20 @@ define('IS_WIN', strstr(PHP_OS, 'WIN') ? 1 : 0);
 define('IS_CLI', PHP_SAPI=='cli'? 1 : 0);
 
 /**
- * Define Folder Path 
+ * Define Folder Path
  */
 define('ROOT_PATH', dirname(dirname(__FILE__)) . '/');
-define('APP_PATH', ROOT_PATH . 'application/'); 
+define('APP_PATH', ROOT_PATH . 'application/');
 
 require APP_PATH . 'functions.php';
 require ROOT_PATH . 'vendor/autoload.php';
 
-Framework\Core\App::init();
+$route_config = require ROOT_PATH . '/config/route.php';
+
+use Framework\Core\App;
+use Framework\Core\Route;
+
+App::init(new Route($route_config));
 
 
 

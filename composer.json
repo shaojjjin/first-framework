@@ -1,7 +1,8 @@
 {
     "require": {
         "robmorgan/phinx": "~0.8.0",
-        "filp/whoops": "^2.1"
+        "filp/whoops": "^2.1",
+        "predis/predis": "^1.1"
     },
     "autoload": {
         "classmaps": [
