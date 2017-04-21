@@ -3,19 +3,39 @@ namespace Framework\Core;
 
 class App 
 {
-
-    public static function init(Route $router)
+    /**
+     * 框架初始化
+     */
+    public static function init()
     {
-        var_dump($router->uri);
-        var_dump($router->routes);
-        $router->dispatch(); //路由分发
-//        self::run();
+        self::load_config(); //加载配置文件
+
+        self::run(new Route());
     }
 
-    public static function run()
+    /**
+     * 启动框架
+     * @param Route $router
+     */
+    private static function run(Route $router)
     {
-        require ROOT_PATH . 'route.php';
-        
-        Route::dispatch();
+        $router->dispatch(); //路由分发
+    }
+
+    /**
+     * 初始加载配置文件
+     */
+    private static function load_config()
+    {
+        global $app_config;
+        $app_config = [];
+        $config_dir = opendir(CONF_PATH);
+        while (($file = readdir($config_dir)) !== false) {
+            if ($file == '.' || $file == '..' || is_dir($file)) {
+                continue;
+            } else {
+                $app_config[basename($file, '.php')] = require CONF_PATH . $file;
+            }
+        }
     }
 }

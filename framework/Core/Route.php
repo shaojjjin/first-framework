@@ -9,12 +9,11 @@ class Route
     /**
      * Route constructor.
      * 加载路由配置
-     * @param array $routes
      */
-    public function __construct($routes = [])
+    public function __construct()
     {
         $this->uri = self::detect_uri();
-        $this->routes = self::loader($routes);
+        $this->routes = self::loader(config('routes', []));
     }
 
     /**
@@ -60,17 +59,21 @@ class Route
     {
         $routes = [];
 
-        foreach ($routes_tmp['url'] as $uri => $params) {
-            $method = strtoupper($params[0]);
-            $uri = self::handleUri($uri);
-            $routes[$method][$uri] = $params[1];
+        if (isset($routes_tmp['url'])) {
+            foreach ($routes_tmp['url'] as $uri => $params) {
+                $method = strtoupper($params[0]);
+                $uri = self::handleUri($uri);
+                $routes[$method][$uri] = $params[1];
+            }
         }
 
-        foreach ($routes_tmp['group'] as $prefix => $item) {
-            foreach ($item as $uri => $params) {
-                $method = strtoupper($params[0]);
-                $full_uri = self::handleUri($prefix . '/' . $uri);
-                $routes[$method][$full_uri] = $params[1];
+        if (isset($routes_tmp['group'])) {
+            foreach ($routes_tmp['group'] as $prefix => $item) {
+                foreach ($item as $uri => $params) {
+                    $method = strtoupper($params[0]);
+                    $full_uri = self::handleUri($prefix . '/' . $uri);
+                    $routes[$method][$full_uri] = $params[1];
+                }
             }
         }
 
@@ -115,7 +118,7 @@ class Route
      * 实例化控制器
      * @param null $callback
      */
-    public static function initController($callback = null)
+    private static function initController($callback = null)
     {
         $segments = explode('@', $callback);
 
@@ -136,6 +139,6 @@ class Route
      */
     public static function errorCallBack()
     {
-
+        echo '路由配置不存在！';
     }
 }
