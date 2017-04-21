@@ -5,6 +5,6 @@ class IndexController
 {
     public function index()
     {
-        echo '加载控制器成功！';
+        first_function();
     }
 }

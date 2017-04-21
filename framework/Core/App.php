@@ -1,7 +1,10 @@
 <?php
 namespace Framework\Core;
 
-class App 
+use Whoops\Run as Whoops;
+use Whoops\Handler\PrettyPageHandler;
+
+class App
 {
     /**
      * 框架初始化
@@ -9,6 +12,7 @@ class App
     public static function init()
     {
         self::load_config(); //加载配置文件
+        self::initWhoops(); //加载错误提示
 
         self::run(new Route());
     }
@@ -38,4 +42,12 @@ class App
             }
         }
     }
+
+    private static function initWhoops()
+    {
+        $whoops = new Whoops();
+        $whoops->pushHandler(new PrettyPageHandler);
+        $whoops->register();
+    }
+
 }

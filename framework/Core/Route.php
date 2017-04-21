@@ -5,6 +5,7 @@ class Route
 {
     public $uri; //当前访问
     public $routes = []; //路由配置数组
+    public static $methods = ['GET', 'POST', 'PUT', 'DELETE']; //支持的请求方式
 
     /**
      * Route constructor.
@@ -63,7 +64,13 @@ class Route
             foreach ($routes_tmp['url'] as $uri => $params) {
                 $method = strtoupper($params[0]);
                 $uri = self::handleUri($uri);
-                $routes[$method][$uri] = $params[1];
+                if ($method == 'ANY') {
+                    foreach (self::$methods as $val) {
+                        $routes[$val][$uri] = $params[1];
+                    }
+                } else {
+                    $routes[$method][$uri] = $params[1];
+                }
             }
         }
 
@@ -139,6 +146,6 @@ class Route
      */
     public static function errorCallBack()
     {
-        echo '路由配置不存在！';
+        throw new Exception('404 Not Found!');
     }
 }

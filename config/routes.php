@@ -8,16 +8,17 @@
 return [
     'url' => [
         '/' => ['get', 'IndexController@index'],
-        'Closure' => ['get', function () {
-            echo 'Closure Route Test Success!';
-        }],
-        'post' => ['post', function () {
-            echo 'test post!';
+        'post' => ['post', function() {
+            $data = [
+                'status' => 1,
+                'message' => 'test success!'
+            ];
+            echo json_encode($data);
         }]
     ],
     'group' => [
-        'dash' => [
-            '/' => ['get', 'DashController@index'],
+        'test' => [
+            '/' => ['get', 'IndexController@index'],
             'Closure' => ['get', function () {
                 echo 'Group Route Closure Test Success!';
             }]

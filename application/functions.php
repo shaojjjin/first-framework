@@ -1,7 +1,7 @@
 <?php
 function first_function()
 {
-    echo 'the first function';
+    echo 'Hello World!';
 }
 
 /**
