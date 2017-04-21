@@ -9,8 +9,8 @@ define('IS_CLI', PHP_SAPI=='cli'? 1 : 0);
 /**
  * Define Folder Path 
  */
-define('ROOT_PATH', __DIR__ . '/../');
-define('APP_PATH', ROOT_PATH . 'application/');
+define('ROOT_PATH', dirname(dirname(__FILE__)) . '/');
+define('APP_PATH', ROOT_PATH . 'application/'); 
 
 require APP_PATH . 'functions.php';
 require ROOT_PATH . 'vendor/autoload.php';

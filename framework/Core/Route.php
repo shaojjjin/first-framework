@@ -89,9 +89,11 @@ class Route
                         //grab the controller name and method call
                         $segments = explode('@', $last);
                         //instanitate controller
-                        $controller = new $segments[0]();
+                        $controller_name = 'App\\Http\\Controller\\' . $segments[0];
+                        $function_name = $segments[1];
+                        $controller = new $controller_name();
                         //call method
-                        $return = $controller->$segments[1]();
+                        $return = $controller->$function_name();
                         if ($after) {
                             $after_segments = explode('@', $after);
                             $after_segments[0]::$after_segments[1]($return);
