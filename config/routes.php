@@ -7,14 +7,14 @@
  */
 return [
     'url' => [
-        '/' => ['get', 'IndexController@index'],
+        '/' => ['get', 'IndexController@index', 'name' => 'home_page'],
         'post' => ['post', function() {
             $data = [
                 'status' => 1,
                 'message' => 'test success!'
             ];
             echo json_encode($data);
-        }]
+        }, 'name' => 'test_post']
     ],
     'group' => [
         'test' => [

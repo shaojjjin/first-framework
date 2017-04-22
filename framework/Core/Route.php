@@ -1,6 +1,8 @@
 <?php
 namespace Framework\Core;
 
+use ReflectionMethod;
+
 class Route
 {
     public $uri; //当前访问
@@ -79,7 +81,13 @@ class Route
                 foreach ($item as $uri => $params) {
                     $method = strtoupper($params[0]);
                     $full_uri = self::handleUri($prefix . '/' . $uri);
-                    $routes[$method][$full_uri] = $params[1];
+                    if ($method == 'ANY') {
+                        foreach (self::$methods as $val) {
+                            $routes[$val][$full_uri] = $params[1];
+                        }
+                    } else {
+                        $routes[$method][$full_uri] = $params[1];
+                    }
                 }
             }
         }
@@ -118,7 +126,9 @@ class Route
             is_object($callback) === true ? $callback() : self::initController($callback);
         }
 
-        if ($route_exist === false) self::errorCallBack();
+        if ($route_exist === false) {
+            self::errorCallBack(404, '该路由不存在！');
+        }
     }
 
     /**
@@ -127,25 +137,39 @@ class Route
      */
     private static function initController($callback = null)
     {
-        $segments = explode('@', $callback);
-
-        $controller_name = 'App\\Http\\Controller\\' . $segments[0];
-        $function_name = $segments[1];
+        list($controller, $method) = explode('@', $callback);
+        $controller = 'App\\Http\\Controller\\' . $controller;
 
         //判断是否存在控制器
-        if (class_exists($controller_name)) {
-            $controller = new $controller_name();
-            $controller->$function_name();
+        if (method_exists($controller, $method)) {
+            //构建反射
+            $reflector = new ReflectionMethod($controller, $method);
+            $parameters = [];
+            foreach ($reflector->getParameters() as $key => $parameter) {
+                $class = $parameter->getClass();
+                if ($class) {
+                    array_splice($parameters, $key, 0, [new $class->name]);
+                }
+            }
+            call_user_func_array([new $controller(), $method], $parameters);
         } else {
-            self::errorCallBack();
+            $error_msg = $controller . '类不存在！';
+            self::errorCallBack(404, $error_msg);
         }
     }
 
     /**
-     * 处理错误
+     * 错误处理
+     * @param int $code
+     * @param string $message
+     * @throws Exception
      */
-    public static function errorCallBack()
+    public static function errorCallBack($code = 500, $message = '')
     {
-        throw new Exception('404 Not Found!');
+        if (APP_DEBUG === true) {
+            throw new Exception($message, $code);
+        } else {
+            echo '404';
+        }
     }
 }
