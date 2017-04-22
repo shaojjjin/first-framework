@@ -18,7 +18,8 @@ require ROOT_PATH . 'vendor/autoload.php';
 
 use Framework\Core\App;
 
-App::init();
+$app = App::init();
+$app->run();
 
 
 

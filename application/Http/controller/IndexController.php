@@ -5,6 +5,6 @@ class IndexController
 {
     public function index()
     {
-        first_function();
+        echo 'hello world!';
     }
 }

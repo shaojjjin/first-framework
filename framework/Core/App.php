@@ -7,6 +7,8 @@ use Illuminate\Database\Capsule\Manager as Capsule;
 
 class App
 {
+    private static $app;
+
     /**
      * 框架初始化
      */
@@ -15,15 +17,20 @@ class App
         self::load_config(); //加载配置文件
         self::initWhoops(new Whoops()); //加载错误提示
         self::initDatabase(new Capsule()); //初始化Eloquent
-        self::run(new Route());
+
+        if (!isset(self::$app)) {
+            self::$app = new self;
+        }
+
+        return self::$app;
     }
 
     /**
      * 启动框架
-     * @param Route $router
      */
-    private static function run(Route $router)
+    public function run()
     {
+        $router = new Route();
         $router->dispatch(); //路由分发
     }
 
@@ -33,7 +40,7 @@ class App
     private static function load_config()
     {
         global $global_config;
-
+        $config = [];
         $global_config_path = CONF_PATH . 'config.php';
         if (!file_exists($global_config_path)) {
             $default_conf = <<<eof
@@ -65,11 +72,16 @@ eof;
     }
 
     /**
+     * 初始化Eloquent
      * @param Capsule $capsule
+     * @return bool
      */
     private static function initDatabase(Capsule $capsule)
     {
-        $capsule->addConnection(config('database'));
+        $database_config = config('database', []);
+        if (empty($database_config)) return false;
+
+        $capsule->addConnection($database_config);
         $capsule->setAsGlobal();
         $capsule->bootEloquent();
     }

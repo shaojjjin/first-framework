@@ -1,6 +1,6 @@
 <?php
 /**
- * Created by PhpStorm.
+ * 路由配置表
  * User: Jasper
  * Date: 2017/4/21 0021
  * Time: 10:54
@@ -14,7 +14,7 @@ return [
                 'message' => 'test success!'
             ];
             echo json_encode($data);
-        }, 'name' => 'test_post']
+        }, 'name' => 'test_post'],
     ],
     'group' => [
         'test' => [
