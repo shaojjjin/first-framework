@@ -32,22 +32,26 @@ class App
      */
     private static function load_config()
     {
-        global $app_config;
+        global $global_config;
+
         $global_config_path = CONF_PATH . 'config.php';
-        if (file_exists($global_config_path)) {
-            $_config = require $global_config_path;
+        if (!file_exists($global_config_path)) {
+            $default_conf = <<<eof
+<?php
+return [
+
+];
+eof;
+            file_put_contents($global_config_path, $default_conf);
         } else {
-//            file_put_contents($global_config_path, var_export([]), true);
-        }
-        exit;
-        $config_dir = opendir(CONF_PATH);
-        while (($file = readdir($config_dir)) !== false) {
-            if ($file == '.' || $file == '..' || is_dir($file)) {
-                continue;
-            } else {
-                $app_config[basename($file, '.php')] = require CONF_PATH . $file;
+            $config = require $global_config_path;
+            if (isset($config['load_ext']) && is_array($config['load_ext'])) {
+                foreach ($config['load_ext'] as $ext_name) {
+                    $config[$ext_name] = require CONF_PATH . $ext_name . '.php';
+                }
             }
         }
+        $global_config = $config;
     }
 
     /**

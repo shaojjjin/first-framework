@@ -13,16 +13,12 @@ function first_function()
 function config($key = '', $default = null)
 {
     if (!$key) return false;
-
-    global $app_config;
-
+    global $global_config;
     $config_keys = explode('.', $key);
-
-    $data = $app_config;
+    $data = $global_config;
     foreach ($config_keys as $k => $v) {
         if (!isset($data[$v])) return $default; //判断是否存在该配置项
         $data = $data[$v];
     }
-
     return $data;
 }

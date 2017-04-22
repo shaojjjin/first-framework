@@ -1,0 +1,4 @@
+<?php
+return [
+    'load_ext' => ['routes', 'database'] //加载配置文件夹下的其他配置文件
+];

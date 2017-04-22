@@ -4,11 +4,11 @@
  */
 return [
     'driver'    => 'mysql',
-    'host'      => 'localhost',
+    'host'      => '127.0.0.1',
     'database'  => '',
     'username'  => '',
     'password'  => '',
     'charset'   => 'utf8',
-    'collation' => 'utf8_general_ci',
+    'collation' => 'utf8_unicode_ci',
     'prefix'    => ''
 ];
