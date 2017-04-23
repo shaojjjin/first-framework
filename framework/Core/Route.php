@@ -91,9 +91,8 @@ class Route
      */
     public function dispatch($uri = '')
     {
-        $request = request();
-        $method = $request->method; //当前访问的方法
-        $uri = empty($uri) ? $request->url : $uri;
+        $method = request()->method; //当前访问的方法
+        $uri = empty($uri) ? request()->url : $uri;
         $current_method_routes = $this->routes[$method]; //当前请求方法的路由表
 
         //判断当前请求是否存在与路由配置中
@@ -116,13 +115,17 @@ class Route
      */
     protected static function initController($callback = null)
     {
-        list($controller, $method) = explode('@', $callback);
+        list($controller, $action) = explode('@', $callback);
+
+        request()->setController($controller); //设置当前的控制器
+        request()->setAction($action); //设置当前操作名
+
         $controller = 'App\\Http\\Controller\\' . $controller;
 
         //判断是否存在控制器
-        if (method_exists($controller, $method)) {
+        if (method_exists($controller, $action)) {
             //构建反射
-            $reflector = new ReflectionMethod($controller, $method);
+            $reflector = new ReflectionMethod($controller, $action);
             $parameters = [];
             foreach ($reflector->getParameters() as $key => $parameter) {
                 $class = $parameter->getClass();
@@ -130,7 +133,7 @@ class Route
                     array_splice($parameters, $key, 0, [new $class->name]);
                 }
             }
-            call_user_func_array([new $controller(), $method], $parameters);
+            call_user_func_array([new $controller(), $action], $parameters);
         } else {
             $error_msg = $controller . '类不存在！';
             self::errorCallBack(404, $error_msg);

@@ -20,6 +20,8 @@ return [
         'test' => [
             '/' => ['get', 'IndexController@index'],
             'Closure' => ['get', function () {
+                var_dump($_SERVER['REQUEST_URI']);
+                var_dump(request());
                 echo 'Group Route Closure Test Success!';
             }]
         ]
