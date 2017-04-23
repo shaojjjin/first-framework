@@ -5,7 +5,6 @@ use ReflectionMethod;
 
 class Route
 {
-    public $uri; //当前访问
     public $routes = []; //路由配置数组
     public static $methods = ['GET', 'POST', 'PUT', 'DELETE']; //支持的请求方式
 
@@ -15,29 +14,7 @@ class Route
      */
     public function __construct()
     {
-        $this->uri = self::detect_uri();
         $this->routes = self::loader(config('routes', []));
-    }
-
-    /**
-     * 获取当前访问的uri
-     * inspired by CodeIgniter 2
-     * @return string $uri
-     */
-    public static function detect_uri()
-    {
-        $uri = $_SERVER['REQUEST_URI'];
-
-        if (strpos($uri, $_SERVER['SCRIPT_NAME']) === 0) {
-            $uri = substr($uri, strlen($_SERVER['SCRIPT_NAME']));
-        } elseif (strpos($uri, dirname($_SERVER['SCRIPT_NAME'])) === 0) {
-            $uri = substr($uri, strlen(dirname($_SERVER['SCRIPT_NAME'])));
-        }
-
-        if ($uri == '/' || empty($uri)) return '/';
-
-        $uri = parse_url($uri, PHP_URL_PATH);
-        return str_replace(array('//', '../'), '/', trim($uri, '/'));
     }
 
     /**
@@ -110,11 +87,13 @@ class Route
 
     /**
      * 分发执行
+     * @param string $uri 当前请求的地址
      */
-    public function dispatch()
+    public function dispatch($uri = '')
     {
-        $uri = $this->uri; //当前请求的地址
-        $method = $_SERVER['REQUEST_METHOD']; //当前访问的方法
+        $request = request();
+        $method = $request->method; //当前访问的方法
+        $uri = empty($uri) ? $request->url : $uri;
         $current_method_routes = $this->routes[$method]; //当前请求方法的路由表
 
         //判断当前请求是否存在与路由配置中
@@ -135,7 +114,7 @@ class Route
      * 实例化控制器
      * @param null $callback
      */
-    private static function initController($callback = null)
+    protected static function initController($callback = null)
     {
         list($controller, $method) = explode('@', $callback);
         $controller = 'App\\Http\\Controller\\' . $controller;

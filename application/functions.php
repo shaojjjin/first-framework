@@ -22,3 +22,14 @@ function config($key = '', $default = null)
     }
     return $data;
 }
+
+if (!function_exists('request')) {
+    /**
+     * 获取当前Request对象实例
+     * @return \Framework\Core\Request
+     */
+    function request()
+    {
+        return Framework\Core\Request::instance();
+    }
+}
