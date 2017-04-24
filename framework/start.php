@@ -13,10 +13,14 @@ define('ROOT_PATH', dirname(dirname(__FILE__)) . '/');
 define('APP_PATH', ROOT_PATH . 'application/');
 define('CONF_PATH', ROOT_PATH . 'config/');
 
+require 'helper.php';
 require APP_PATH . 'functions.php';
+
 require ROOT_PATH . 'vendor/autoload.php';
 
 use Framework\Core\App;
+
+
 
 $app = App::init();
 $app->run();

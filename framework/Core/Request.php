@@ -12,6 +12,8 @@ class Request
     public $fullUrl; //完整的请求url
     public $method; //当前请求类型
 
+    public $defaultFilter; //默认过滤方法
+
     public static function instance()
     {
         if (!isset(self::$request)) {
@@ -25,6 +27,7 @@ class Request
     {
         $this->setUrl();
         $this->setMethod();
+        $this->defaultFilter = config('default_filter');
     }
 
     /**
@@ -67,31 +70,65 @@ class Request
      */
     public function all()
     {
+        $data = $_REQUEST;
+        if (is_object($data)) return $data;
 
+        $params['filters'] = explode(',', $this->defaultFilter);
+        array_walk_recursive($data, [$this, 'filter'], $params);
+        reset($data);
+
+        return $data;
     }
 
     /**
      * 获取所有请求类型中的指定参数值
-     * @param null $key
-     * @param null $default
+     * @param null $name 参数名
+     * @param null $default 默认值
+     * @param null $filters 过滤方式
      * @return mixed
      */
-    public function input($key = null, $default = null)
+    public function input($name = null, $default = null, $filters = null)
     {
-        if (empty($key)) return false;
-        if (!isset($_REQUEST[$key])) return $default;
+        if (empty($name)) return false;
 
-        return self::filter($_REQUEST[$key]);
+        $data = $_REQUEST;
+        $keys = explode('.', $name);
+        foreach ($keys as $key) {
+            $data = $data[$key];
+        }
+        if (is_object($data) || $filters === false) return $data;
+
+        if (empty($filters)) $filters = $this->defaultFilter;
+        $filters = is_string($filters) ? explode(',', $filters) : $filters; //将过滤方法转为数组
+
+        $params['filters'] = $filters;
+
+        if (is_array($data)) {
+            array_walk_recursive($data, [$this, 'filter'], $params);
+            reset($data);
+        } else {
+            $data = self::filter($data, $default, $params);
+        }
+
+        return empty($data) ? $default : $data;
     }
 
-    public function get()
+    /**
+     * 过滤数据
+     * @param null $value
+     * @param mixed $key
+     * @param array $params
+     * @return mixed
+     */
+    protected function filter($value = null, $key = 0, $params = [])
     {
+        foreach ($params['filters'] as $filter) {
+            if (is_callable($filter)) {
+                $value = call_user_func($filter, $value);
+            }
+        }
 
-    }
-
-    public function post()
-    {
-
+        return $value;
     }
 
     /**
@@ -110,16 +147,6 @@ class Request
     public function setAction($action = '')
     {
         $this->action = $action;
-    }
-
-    /**
-     * 过滤数据
-     * @param null $data
-     * @return mixed
-     */
-    protected static function filter($data = null)
-    {
-        return $data;
     }
 
     /**
