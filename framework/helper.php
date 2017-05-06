@@ -5,6 +5,7 @@
  * Date: 17/4/24
  * Time: 下午3:05
  */
+
 /**
  * 读取配置,当配置项不存在则时返回 $default
  * @param string $key
